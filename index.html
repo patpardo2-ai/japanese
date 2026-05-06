@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2e6b4f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="N4 Hobonichi">
+<title>N4 Hobonichi - Patri</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --sage:#4a7c59;--sage-pale:#eef4f0;
+  --amber:#d4813a;--amber-pale:#fdf3e7;
+  --blue:#2c4a8c;--blue-pale:#eef1fa;
+  --red:#c0392b;--plum:#6b3a6b;
+  --ink:#1a1a1a;--gray:#777;--lgray:#ccc;--vlgray:#f2f0eb;--cream:#faf8f3;
+  --bg:var(--cream);--surface:#fff;--border:#e0ddd8;--text:var(--ink);--text2:var(--gray);
+  --radius:10px;--safe-bottom:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#111;--surface:#1c1c1e;--border:#333;--text:#f0ede8;--text2:#999;--vlgray:#222;--cream:#111;}
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+#app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;}
+
+/* TOP BAR */
+.topbar{padding:12px 16px 8px;background:var(--surface);border-bottom:0.5px solid var(--border);flex-shrink:0;}
+.topbar-row1{display:flex;align-items:center;justify-content:space-between;}
+.topbar-title{font-size:17px;font-weight:600;color:var(--text);}
+.topbar-jp{font-size:12px;color:var(--text2);}
+.streak{font-size:13px;font-weight:600;color:#d4813a;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;}
+.stat{background:var(--vlgray);border-radius:8px;padding:6px 4px;text-align:center;}
+.stat-n{font-size:16px;font-weight:600;}
+.stat-l{font-size:9px;color:var(--text2);margin-top:1px;}
+.prog-wrap{height:3px;background:var(--vlgray);border-radius:2px;margin-top:8px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:2px;background:var(--sage);transition:width 0.4s;}
+
+/* NAV BAR */
+.navbar{display:flex;background:var(--surface);border-top:0.5px solid var(--border);flex-shrink:0;padding-bottom:var(--safe-bottom);}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 6px;cursor:pointer;color:var(--text2);font-size:10px;gap:3px;border:none;background:none;}
+.nav-item.active{color:var(--sage);}
+.nav-item i{font-size:22px;}
+
+/* CONTENT SCROLL */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 8px;}
+
+/* DAY NAVIGATION */
+.day-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.day-nav-btn{width:36px;height:36px;border-radius:50%;border:0.5px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);font-size:18px;flex-shrink:0;}
+.day-nav-label{flex:1;text-align:center;font-size:14px;font-weight:500;}
+
+/* DAY PANEL */
+.day-panel{border-radius:var(--radius);overflow:hidden;border:0.5px solid var(--border);margin-bottom:10px;background:var(--surface);}
+.day-hdr{padding:11px 14px;display:flex;justify-content:space-between;align-items:center;}
+.day-hdr-title{font-size:15px;font-weight:600;color:white;}
+.day-hdr-sub{font-size:11px;color:rgba(255,255,255,0.7);}
+
+/* KANJI CARDS */
+.kanji-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px;}
+.kanji-card{border:0.5px solid var(--border);border-radius:8px;padding:9px;display:flex;gap:8px;background:var(--surface);}
+.kanji-char{font-size:26px;color:var(--sage);font-weight:600;line-height:1;display:flex;align-items:center;padding-right:8px;border-right:0.5px solid var(--border);}
+.kanji-info{flex:1;min-width:0;}
+.kanji-on{font-size:10px;color:var(--red);font-weight:600;}
+.kanji-kun{font-size:10px;color:var(--sage);}
+.kanji-meaning{font-size:11px;font-weight:600;margin-top:2px;}
+.kanji-ex{font-size:10px;color:var(--text2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* GRAMMAR CARD */
+.gram-card{margin:0 12px 10px;border:0.5px solid var(--blue);border-radius:8px;padding:10px;background:var(--blue-pale);}
+.gram-struct{font-size:14px;font-weight:600;color:var(--red);margin-bottom:3px;}
+.gram-meaning{font-size:12px;color:var(--text2);}
+.gram-ex{font-size:12px;color:var(--text2);margin-top:4px;font-style:italic;}
+
+/* TASKS */
+.section-lbl{padding:6px 14px 4px;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;border-top:0.5px solid var(--border);}
+.task-row{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-top:0.5px solid var(--border);cursor:pointer;-webkit-user-select:none;}
+.task-row:active{background:var(--vlgray);}
+.task-row.done .task-text{text-decoration:line-through;color:var(--text2);}
+.checkbox{width:20px;height:20px;border:1.5px solid var(--border);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all 0.15s;}
+.task-row.done .checkbox{background:var(--sage);border-color:var(--sage);color:white;}
+.badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.b-amber{background:var(--amber);color:white;}
+.b-sage{background:var(--sage);color:white;}
+.b-blue{background:var(--blue);color:white;}
+.task-text{font-size:13px;line-height:1.4;flex:1;}
+.task-sub{font-size:10px;color:var(--text2);margin-top:2px;}
+.task-opt{font-size:10px;color:var(--text2);font-style:italic;}
+
+/* CALENDAR */
+.month-block{margin-bottom:16px;}
+.month-title{font-size:13px;font-weight:600;padding:6px 0;margin-bottom:6px;border-bottom:2px solid;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-hdr{text-align:center;font-size:10px;font-weight:500;color:var(--text2);padding:3px 0;}
+.cal-hdr.fri{color:var(--amber);}
+.cal-hdr.we{color:var(--red);}
+.cal-cell{aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-weight:500;position:relative;background:var(--surface);border:0.5px solid var(--border);}
+.cal-cell:active{opacity:0.7;}
+.cal-cell.done{background:var(--sage-pale);border-color:var(--sage);}
+.cal-cell.done::after{content:"✓";position:absolute;top:1px;right:2px;font-size:7px;color:var(--sage);}
+.cal-cell.today{border-color:var(--blue);border-width:1.5px;}
+.cal-cell.fri{background:var(--amber-pale);}
+.cal-cell.we{background:#fff5f5;}
+.cal-cell.past{opacity:0.35;}
+.cal-cell.exam{border-color:var(--red);border-width:1.5px;}
+.cal-cell.exam::before{content:"★";position:absolute;bottom:1px;font-size:7px;color:var(--red);}
+.cal-k{font-size:6px;color:var(--text2);line-height:1;}
+.cal-empty{aspect-ratio:1;}
+
+/* INDEX */
+.search-bar{width:100%;padding:9px 12px;border:0.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);margin-bottom:10px;}
+.idx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:5px;}
+.idx-item{display:flex;align-items:center;gap:6px;padding:7px 8px;border:0.5px solid var(--border);border-radius:8px;cursor:pointer;background:var(--surface);}
+.idx-item:active{opacity:0.7;}
+.idx-item.done{background:var(--sage-pale);border-color:var(--sage);}
+.idx-check{width:14px;height:14px;border:1px solid var(--border);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.idx-item.done .idx-check{background:var(--sage);border-color:var(--sage);color:white;}
+.idx-kanji{font-size:16px;font-weight:600;}
+.idx-meaning{font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.gr-item{display:flex;gap:8px;padding:9px 10px;border:0.5px solid var(--border);border-radius:8px;cursor:pointer;background:var(--surface);margin-bottom:5px;}
+.gr-item:active{opacity:0.7;}
+.gr-item.done{background:var(--blue-pale);border-color:var(--blue);}
+.gr-check{width:14px;height:14px;border:1px solid var(--border);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;margin-top:2px;}
+.gr-item.done .gr-check{background:var(--blue);border-color:var(--blue);color:white;}
+.gr-struct{font-size:12px;font-weight:600;color:var(--red);min-width:0;}
+.gr-meaning{font-size:11px;color:var(--text2);flex:1;}
+.sec-lbl2{font-size:11px;font-weight:600;color:var(--text2);margin:10px 0 5px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-row1">
+      <div>
+        <div class="topbar-title">日本語 N4 <span class="topbar-jp">· Patri</span></div>
+        <div class="topbar-jp" style="margin-top:2px">6 mayo — 6 dic 2026</div>
+      </div>
+      <div class="streak" id="streakBadge">🔥 0 días</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-n" id="stDone">0</div><div class="stat-l">completos</div></div>
+      <div class="stat"><div class="stat-n" id="stKanji">0</div><div class="stat-l">kanji</div></div>
+      <div class="stat"><div class="stat-n" id="stGram">0</div><div class="stat-l">gramática</div></div>
+      <div class="stat"><div class="stat-n" id="stLeft">—</div><div class="stat-l">p/examen</div></div>
+    </div>
+    <div class="prog-wrap"><div class="prog-fill" id="progBar" style="width:0%"></div></div>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <div class="navbar">
+    <button class="nav-item active" id="nb-day" onclick="setView('day')">
+      <i class="ti ti-calendar-event"></i>Hoy
+    </button>
+    <button class="nav-item" id="nb-cal" onclick="setView('cal')">
+      <i class="ti ti-calendar-month"></i>Calendario
+    </button>
+    <button class="nav-item" id="nb-kanji" onclick="setView('kanji')">
+      <i class="ti ti-japanese"></i>漢字
+    </button>
+    <button class="nav-item" id="nb-gram" onclick="setView('gram')">
+      <i class="ti ti-book-2"></i>文法
+    </button>
+  </div>
+</div>
+
+<script>
+const START=new Date(2026,4,6);
+const END=new Date(2026,11,6);
+const DAY_ES=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MON_ES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MON_COL={5:'#2e6b4f',6:'#2c4a8c',7:'#c0392b',8:'#d4813a',9:'#6b3a6b',10:'#8b4513',11:'#2e7d7d',12:'#1a1a2e'};
+
+const KANJI=[
+  ["世","せ/せい","よ","mundo / generación","世界・世の中"],["主","しゅ","おも/ぬし","principal / dueño","主人・主な"],
+  ["乗","じょう","の","montar / subir","乗る・乗車"],["事","じ","こと","asunto / cosa","仕事・事件"],
+  ["京","きょう","みやこ","capital","東京・京都"],["使","し","つか","usar / utilizar","使う・使用"],
+  ["代","だい","か/かわ","época / sustituir","時代・代わる"],["以","い","—","desde / por","以上・以下"],
+  ["低","てい","ひく","bajo / inferior","低い・低下"],["住","じゅう","す","residir / vivir","住む・住所"],
+  ["体","たい","からだ","cuerpo","体・体力"],["作","さく/さ","つく","hacer / crear","作る・作品"],
+  ["便","べん/びん","たよ","conveniente / correo","便利・郵便"],["借","しゃく","か","pedir prestado","借りる・借金"],
+  ["働","どう","はたら","trabajar","働く・労働"],["元","げん/がん","もと","origen / salud","元気・元々"],
+  ["兄","きょう","あに","hermano mayor","兄・お兄さん"],["光","こう","ひかり","luz / brillar","光・光る"],
+  ["写","しゃ","うつ","copiar / fotografiar","写真・写す"],["冬","とう","ふゆ","invierno","冬・冬休み"],
+  ["切","せつ","き","cortar / importante","切る・大切"],["別","べつ","わか","separar / diferente","別れる・特別"],
+  ["力","りょく/りき","ちから","fuerza / poder","力・努力"],["勉","べん","—","esfuerzo / estudio","勉強"],
+  ["動","どう","うご","moverse / mover","動く・運動"],["区","く","—","distrito / barrio","区・地区"],
+  ["医","い","—","medicina / médico","医者・医学"],["去","きょ/こ","さ","pasado / irse","去年・過去"],
+  ["台","だい/たい","—","máquina / plataforma","台・台風"],["合","ごう/がっ","あ/あい","encajar / unir","合う・試合"],
+  ["同","どう","おな","mismo / igual","同じ・同時"],["味","み","あじ","sabor / gusto","味・意味"],
+  ["品","ひん","しな","artículo / calidad","品・商品"],["員","いん","—","miembro / empleado","店員・会員"],
+  ["問","もん","と/とん","pregunta / problema","問題・質問"],["回","かい","まわ","vuelta / vez","回・今回"],
+  ["図","ず/と","え/はか","dibujo / mapa","図・地図"],["地","ち/じ","—","tierra / lugar","地図・地下"],
+  ["堂","どう","—","sala / comedor","食堂・公会堂"],["場","じょう","ば","lugar / escenario","場所・広場"],
+  ["声","せい","こえ","voz","声・大声"],["売","ばい","う","vender","売る・売り場"],
+  ["夏","げ/か/が","なつ","verano","夏・夏休み"],["夕","せき","ゆう","tarde / atardecer","夕方・夕食"],
+  ["夜","や","よ/よる","noche","夜・深夜"],["太","たい/た","ふと","gordo / grueso","太い・太陽"],
+  ["好","こう","す/この","gustar / amor","好き・好物"],["妹","まい","いもうと","hermana menor","妹・妹さん"],
+  ["姉","し","お/あね","hermana mayor","姉・お姉さん"],["始","し","はじ","empezar / comenzar","始まる・開始"],
+  ["字","じ","—","carácter / letra","文字・漢字"],["室","しつ","—","habitación / sala","教室・室内"],
+  ["家","か/け","いえ/や/うち","casa / familia","家・家族"],["寒","かん","さむ","frío (clima)","寒い・寒さ"],
+  ["屋","おく","や","tienda / habitación","部屋・屋根"],["工","こう/く","—","construcción","工場・工事"],
+  ["市","し","いち","ciudad / mercado","市場・都市"],["帰","き","かえ","volver / regresar","帰る・帰国"],
+  ["広","こう","ひろ","amplio / ancho","広い・広場"],["度","ど/たく","たび","vez / grado","今度・温度"],
+  ["建","けん","た","construir","建てる・建物"],["引","いん","ひ","tirar / atraer","引く・引越し"],
+  ["弟","だい/で/てい","おとうと","hermano menor","弟・弟さん"],["弱","じゃく","よわ","débil / flojo","弱い・弱点"],
+  ["強","きょう","つよ","fuerte / resistente","強い・強調"],["待","たい","ま","esperar","待つ・待合室"],
+  ["心","しん","こころ","corazón / mente","心・心配"],["思","し","おも","pensar / creer","思う・思い出"],
+  ["急","きゅう","いそ","apresurarse / urgente","急ぐ・急行"],["悪","あく/お","わる","malo / mal","悪い・悪化"],
+  ["意","い","—","intención / significado","意味・意見"],["所","しょ","ところ","lugar / sitio","場所・所"],
+  ["持","じ","も","tener / llevar","持つ・気持ち"],["教","きょう","おし/おそ","enseñar","教える・教育"],
+  ["文","ぶん/もん","—","texto / escritura","文章・文化"],["料","りょう","—","material / tarifa","料理・料金"],
+  ["方","ほう","かた","dirección / manera","方法・方向"],["旅","りょ","たび","viaje","旅行・旅館"],
+  ["族","ぞく","—","familia / tribu","家族・民族"],["早","そう","はや/さ","temprano / rápido","早い・早朝"],
+  ["明","めい","あ/あか/あき","claro / mañana","明日・明るい"],["映","えい","うつ/は","proyectar","映画・映る"],
+  ["春","しゅん","はる","primavera","春・春休み"],["昼","ちゅう","ひる","mediodía","昼・昼食"],
+  ["暑","しょ","あつ","caluroso","暑い・暑さ"],["暗","あん","くら/くれ","oscuro","暗い・暗記"],
+  ["曜","よう","—","día de la semana","曜日・日曜"],["有","ゆう/う","あ","tener / existir","有名・有る"],
+  ["服","ふく","—","ropa / vestimenta","服・洋服"],["朝","ちょう","あさ","mañana (hora)","朝・今朝"],
+  ["村","そん","むら","aldea / pueblo","村・村人"],["林","りん","はやし","arboleda","林・森林"],
+  ["森","しん","もり","bosque","森・森林"],["業","ぎょう","—","negocio / industria","仕事・業務"],
+  ["楽","らく/がく","たの","placer / música","楽しい・音楽"],["歌","か","うた","canción / cantar","歌う・歌手"],
+  ["止","し","と/や","parar / detener","止まる・中止"],["正","せい/しょう","ただ/まさ","correcto / justo","正しい・正直"],
+  ["歩","ほ","ある/あゆ","caminar","歩く・散歩"],["死","し","し","morir / muerte","死ぬ・死亡"],
+  ["民","みん","たみ","pueblo / gente","国民・民主"],["池","ち","いけ","estanque","池・電池"],
+  ["注","ちゅう","そそ/さ/つ","verter / atención","注意・注文"],["洋","よう","—","occidental / océano","洋服・洋食"],
+  ["洗","せん","あら","lavar","洗う・洗濯"],["海","かい","うみ","mar / océano","海・海外"],
+  ["漢","かん","—","chino / kanji","漢字・漢方"],["牛","ぎゅう","うし","vaca / buey","牛肉・牛乳"],
+  ["物","ぶつ/もつ","もの","cosa / objeto","物・食べ物"],["特","とく","—","especial","特別・特急"],
+  ["犬","けん","いぬ","perro","犬・子犬"],["理","り","ことわり","razón / lógica","理由・料理"],
+  ["産","さん","う","producir / nacer","産業・生産"],["用","よう","もち","uso / asunto","用意・用事"],
+  ["田","でん","た","arrozal","田んぼ・田中"],["町","ちょう","まち","pueblo / barrio","町・町内"],
+  ["画","が/かく","—","imagen / plan","映画・計画"],["界","かい","—","mundo / ámbito","世界・業界"],
+  ["病","びょう","や/やまい","enfermedad","病気・病院"],["発","はつ","—","salir / emitir","出発・発表"],
+  ["県","けん","—","prefectura","県・県庁"],["真","しん","ま","verdad / real","真実・写真"],
+  ["着","ちゃく","き/つ","llegar / ropa","着く・着る"],["知","ち","し","saber / conocer","知る・知識"],
+  ["短","たん","みじか","corto / breve","短い・短期"],["研","けん","と","investigar","研究・研修"],
+  ["私","し","わたし","yo / privado","私・私立"],["秋","しゅう","あき","otoño","秋・秋分"],
+  ["究","きゅう","きわ","investigar a fondo","研究・究明"],["答","とう","こた","respuesta","答え・回答"],
+  ["紙","し","かみ","papel","紙・手紙"],["終","しゅう","おわ/お","terminar","終わる・終了"],
+  ["習","しゅう","なら","aprender / practicar","習う・練習"],["考","こう","かんが","pensar","考える・考え"],
+  ["者","しゃ","もの","persona / especialista","医者・学者"],["肉","にく","—","carne","肉・牛肉"],
+  ["自","じ/し","—","uno mismo","自分・自然"],["色","しき/しょく","いろ","color","色・景色"],
+  ["英","えい","—","inglés / brillante","英語・英国"],["茶","ちゃ/さ","—","té / marrón","お茶・茶色"],
+  ["菜","さい","な","verdura","野菜・菜食"],["薬","やく","くすり","medicina","薬・薬局"],
+  ["親","しん","おや/した","padre / íntimo","親・親切"],["計","けい","はか","medir / plan","計画・時計"],
+  ["試","し","こころ/ため","intentar / examinar","試験・試合"],["説","せつ","と","explicar / teoría","説明・小説"],
+  ["貸","たい","か","prestar","貸す・賃貸"],["質","しつ/しち","—","calidad / naturaleza","質問・品質"],
+  ["赤","せき","あか","rojo","赤い・赤ちゃん"],["走","そう","はし","correr","走る・走行"],
+  ["起","き","お","levantarse","起きる・起こす"],["転","てん","ころ","rodar / caerse","転ぶ・自転車"],
+  ["軽","けい","かる/かろ","ligero / leve","軽い・軽食"],["近","きん/こん","ちか","cercano","近い・近所"],
+  ["送","そう","おく","enviar","送る・放送"],["通","つう","とお/かよ","pasar / tráfico","通る・交通"],
+  ["進","しん","すす","avanzar","進む・進歩"],["運","うん","はこ","transportar / suerte","運ぶ・運動"],
+  ["遠","えん","とお","lejano","遠い・遠足"],["都","と/つ","みやこ","capital / metrópolis","都市・東京都"],
+  ["重","じゅう/ちょう","おも/かさ/え","pesado / importante","重い・重要"],["野","や","の","campo / silvestre","野菜・野球"],
+  ["銀","ぎん","—","plata / banco","銀行・銀色"],["門","もん","—","puerta / especialidad","門・専門"],
+  ["開","かい","あ/ひら","abrir","開ける・開会"],["院","いん","—","institución / hospital","病院・学院"],
+  ["集","しゅう","あつ","reunir","集まる・集合"],["青","せい/しょう","あお","azul / verde","青い・青空"],
+  ["音","おん","おと/ね","sonido","音楽・音"],["頭","ず/とう","あたま","cabeza","頭・頭痛"],
+  ["題","だい","—","tema / título","問題・課題"],["顔","がん","かお","cara / rostro","顔・笑顔"],
+  ["風","ふう/ふ","かぜ","viento / estilo","風・台風"],["飯","はん","めし","arroz / comida","ご飯・夕飯"],
+  ["館","かん","—","edificio / sala","図書館・旅館"],["首","しゅ","くび","cuello / jefe","首・首相"],
+  ["験","けん","ため/ためし","examen","試験・経験"],["鳥","ちょう","とり","pájaro","鳥・小鳥"],
+  ["黒","こく","くろ","negro","黒い・黒板"]
+];
+
+const GRAMMAR=[
+  ["〜より…／〜ほど…ません","comparación: más que / no tanto como","電車よりバスのほうが好きです。"],
+  ["〜より〜のほう","comparación directa: prefiero X a Y","夏より冬のほうが好きです。"],
+  ["〜と〜とどちら","¿cuál de los dos prefieres?","コーヒーと紅茶とどちらが好きですか。"],
+  ["〜ながら…","mientras hace dos cosas a la vez","音楽を聴きながら勉強しています。"],
+  ["〜ところです","estar justo en ese momento","今、ご飯を食べているところです。"],
+  ["〜まで…・〜までに…","hasta / para (fecha límite)","駅まで歩きます。3時までに終わります。"],
+  ["〜ませんか","invitación educada: ¿no quiere...?","一緒に食べませんか。"],
+  ["〜ましょう（か）","propuesta conjunta: vamos a...","もう行きましょうか。"],
+  ["〜（られ）ます","forma potencial: poder hacer algo","日本語が話せます。"],
+  ["〜ができます・〜ことができます","capacidad de hacer algo","料理を作ることができます。"],
+  ["見えます・聞こえます","poder ver / poder oír (sensorial)","ここから山が見えます。"],
+  ["〜たことがあります","haber tenido la experiencia de","日本に行ったことがあります。"],
+  ["〜ことがあります","a veces ocurre que","疲れているとき早く寝ることがあります。"],
+  ["〜てもいいです／〜てはいけません","permitido / prohibido","ここに入ってもいいです。"],
+  ["〜なくてもいいです","no hace falta hacer algo","来なくてもいいですよ。"],
+  ["〜なければなりません","es obligatorio / hay que hacer","薬を飲まなければなりません。"],
+  ["〜がほしいです・〜たいです","querer algo / querer hacer algo","日本に行きたいです。"],
+  ["〜といいです","sería bueno que / espero que","早く治るといいですね。"],
+  ["〜そうです（様態）","parece que (apariencia visual)","雨が降りそうです。"],
+  ["〜がっています・〜がります","mostrar el deseo de otro","新しいゲームをほしがっています。"],
+  ["〜まま…","dejar en el estado que está","電気をつけたまま寝てしまった。"],
+  ["〜から…・〜からです","porque (razón subjetiva)","眠いから、もう寝ます。"],
+  ["〜ので…","porque (razón objetiva, suave)","電車が遅れたので、遅刻しました。"],
+  ["〜て…・〜くて…・〜で…","causa con forma te encadenada","頭が痛くて学校に行けなかった。"],
+  ["〜に…（目的）","para / con el fin de (movimiento)","図書館に本を返しに行きます。"],
+  ["〜ため（に）…","con el propósito de / a causa de","日本語を学ぶために毎日練習します。"],
+  ["〜ように…","para que / de modo que","忘れないように、メモしておきます。"],
+  ["（〜も）〜し、（〜も）…","además / y también (razones)","安いし、おいしいし、また行きたい。"],
+  ["〜たり〜たりします","hacer varias cosas entre otras","映画を見たり、買い物したりします。"],
+  ["〜かもしれません","puede que / quizás (incierto)","明日、雨が降るかもしれません。"],
+  ["〜はずです","se supone que / debería ser","彼はもうすぐ来るはずです。"],
+  ["〜ようです・〜みたいです","parece / da la impresión de","彼女は疲れているようです。"],
+  ["〜なさい","orden directa (superior a inferior)","早く寝なさい。"],
+  ["〜ほうがいいです","es mejor que / sería aconsejable","早く寝たほうがいいですよ。"],
+  ["〜ないと","si no haces X / a menos que","早く行かないと、遅れますよ。"],
+  ["〜たら…（条件）","cuando se complete / si ocurre","家に帰ったら、電話してください。"],
+  ["〜ば…・〜なら…","hipotético / basado en info","お金があれば旅行します。"],
+  ["〜と…（条件）","siempre que X, Y inevitablemente","春になると、桜が咲きます。"],
+  ["〜たら…（発見）","descubrimiento inesperado","窓を開けたら、猫が入ってきた。"],
+  ["〜なら…（情報）","basado en info del interlocutor","駅なら、あそこです。"],
+  ["〜ても…","aunque / incluso si (concesivo)","雨が降っても、行きます。"],
+  ["〜のに…","aunque / a pesar de (queja)","頑張ったのに、失敗しました。"],
+  ["〜と…（引用）","cita indirecta: que / según","明日来ると言っていました。"],
+  ["〜か…・〜かどうか…","si / si...o no (pregunta indirecta)","彼が来るかどうか分かりません。"],
+  ["〜（よ）うと思います","tengo intención de hacer","来年、日本に行こうと思います。"],
+  ["〜つもりです","tener el propósito de / planear","来年も勉強するつもりです。"],
+  ["〜と言っていました","(alguien) dijo que","田中さんは来ると言っていました。"],
+  ["〜そうです（伝聞）","dicen que (información de 2a mano)","明日は雪が降るそうです。"],
+  ["〜らしいです","al parecer (evidencia o rumor)","彼は風邪を引いたらしいです。"],
+  ["〜くします・〜にします","hacer que algo sea de cierta forma","部屋をきれいにします。"],
+  ["〜くなります・〜になります","llegar a ser / cambiar de estado","日本語が上手になりました。"],
+  ["〜ようになります","llegar a poder (cambio gradual)","話せるようになりました。"],
+  ["〜にします・〜ことにします","decidir hacer (decisión propia)","毎日運動することにしました。"],
+  ["〜になります・〜ことになります","quedar decidido (factor externo)","来月、転勤することになりました。"],
+  ["〜てみます","intentar para ver qué pasa","この料理を食べてみてください。"],
+  ["〜ておきます","hacer de antemano (preparación)","旅行前にホテルを予約しておきます。"],
+  ["〜てしまいます","terminar / hacer sin querer","財布を忘れてしまいました。"],
+  ["あげます・〜てあげます","dar / hacer por otra persona","プレゼントをあげます。"],
+  ["くれます・〜てくれます","alguien da / hace algo por mí","友達がプレゼントをくれました。"],
+  ["もらいます・〜てもらいます","recibir / recibir el favor de","友達に漢字を教えてもらいました。"],
+  ["〜（ら）れます（受け身）","pasiva: ser hecho / recibir acción","先生に名前を呼ばれました。"],
+  ["〜（さ）せます","causativa: hacer que alguien haga","子供に野菜を食べさせました。"],
+  ["〜（さ）せられます","causativa-pasiva: ser obligado","毎日残業させられました。"],
+  ["で・に（場所）","de lugar: で acción / に destino","公園で遊ぶ。公園に行きます。"],
+  ["を・と","を objeto / と compañía o cita","本を読む。友達と行きます。"],
+  ["も・しか","も también / しか〜ない solo","私も行きます。百円しかない。"],
+  ["だけ・でも","だけ solo / でも incluso","一つだけ。子供でもできます。"],
+  ["は・が","は tema / が sujeto de habilidad","私は学生。日本語が好きです。"]
+];
+
+let ST={},curDate=new Date(),curView='day';
+curDate.setHours(0,0,0,0);
+
+function load(){try{ST=JSON.parse(localStorage.getItem('hobo_n4')||'{}')}catch(e){ST={}}}
+function save(){try{localStorage.setItem('hobo_n4',JSON.stringify(ST))}catch(e){}}
+function dkey(d){return d.toISOString().slice(0,10)}
+function di(d){return Math.max(0,Math.floor((d-START)/86400000))}
+function gk(idx){const ki=(idx*2)%KANJI.length;return[KANJI[ki],KANJI[(ki+1)%KANJI.length]]}
+function gg(idx){return GRAMMAR[idx%GRAMMAR.length]}
+function isFri(d){return d.getDay()===5}
+function isSat(d){return d.getDay()===6}
+function isSun(d){return d.getDay()===0}
+
+function tasksForDay(d){
+  const idx=di(d),dow=d.getDay(),key=dkey(d);
+  const[k1,k2]=gk(idx);const gr=gg(idx);
+  if(key==='2026-12-06')return[{id:'exam',text:'¡Día del examen JLPT N4! Confía en tu trabajo. 頑張って！',opt:false}];
+  if(dow===5)return[
+    {id:'f1',text:'Repaso Anki — tarjetas vencidas de la semana',b:'10 min',bc:'b-amber',opt:false},
+    {id:'f2',text:'Repasa los kanji de esta semana: léelos y escríbelos',b:'10 min',bc:'b-amber',opt:false},
+    {id:'f3',text:'Repasa los puntos de gramática de esta semana',b:'10 min',bc:'b-amber',opt:false},
+    {id:'f4',text:'Noche: Listening suave — Chika Sensei sin notas',b:'10 min',bc:'b-amber',opt:false},
+  ];
+  if(dow===6)return[
+    {id:'s1',text:'Repaso semanal de gramática — ejercicios del libro',b:'30 min',bc:'b-sage',opt:false},
+    {id:'s2',text:'Lectura N4: NHK Web Easy o libro',b:'30 min',bc:'b-sage',opt:false},
+    {id:'s3',text:'Kanji de la semana: escribe frases propias',b:'30 min',bc:'b-sage',opt:false},
+    {id:'s4',text:'Repaso Anki del día',b:'10 min',bc:'b-sage',opt:false},
+  ];
+  if(dow===0)return[
+    {id:'su1',text:'Simulacro de sección del examen',b:'45 min',bc:'b-blue',opt:false},
+    {id:'su2',text:'Listening JLPT N4 sin subtítulos',b:'30 min',bc:'b-blue',opt:false},
+    {id:'su3',text:'Planifica la semana siguiente',b:'15 min',bc:'b-blue',opt:false},
+    {id:'su4',text:'Repaso Anki del día',b:'10 min',bc:'b-blue',opt:false},
+  ];
+  const ak=idx>0?`Kanji #${Math.max(1,(idx*2)%KANJI.length-9)}–${(idx*2)%KANJI.length}`:'¡Primer día!';
+  const ag=idx>0?`Gram. #${Math.max(1,idx%GRAMMAR.length-4)}–${idx%GRAMMAR.length}`:'¡Primer día!';
+  return[
+    {id:'w1',text:'Repaso Anki',sub:ak+' · '+ag,b:'10 min',bc:'b-amber',opt:false},
+    {id:'w2',text:'Gramática: '+gr[0],sub:gr[1],b:'15 min',bc:'b-blue',opt:false},
+    {id:'w3',text:'Kanji: '+k1[0]+' '+k2[0],sub:'historia visual + escritura + Anki',b:'10 min',bc:'b-sage',opt:false},
+    {id:'w4',text:'Lección Chika Sensei + vocabulario → Anki',b:'10 min',bc:'b-sage',opt:false},
+    {id:'w5',text:'Noche: Listening (10 min) + Anki nocturno (5 min)',b:'15 min',bc:'b-blue',opt:false},
+    {id:'w6',text:'Tarea personal / nota:',opt:true},
+  ];
+}
+
+function toggle(key,tid){
+  if(!ST[key])ST[key]={};
+  if(!ST[key].t)ST[key].t={};
+  ST[key].t[tid]=!ST[key].t[tid];
+  const tasks=tasksForDay(new Date(key));
+  const req=tasks.filter(t=>!t.opt);
+  if(req.every(t=>ST[key].t[t.id])){ST[key].done=true;}
+  save();render();
+}
+function toggleK(i){ST['k'+i]=!ST['k'+i];save();render();}
+function toggleG(i){ST['g'+i]=!ST['g'+i];save();render();}
+
+function dayColor(d){
+  const m=d.getMonth()+1;
+  if(isFri(d))return'#d4813a';
+  if(isSat(d))return'#4a7c59';
+  if(isSun(d))return'#2c4a8c';
+  return{5:'#2e6b4f',6:'#2c4a8c',7:'#c0392b',8:'#d4813a',9:'#6b3a6b',10:'#8b4513',11:'#2e7d7d',12:'#1a1a2e'}[m]||'#4a7c59';
+}
+
+function renderDay(){
+  const d=curDate,idx=di(d),key=dkey(d);
+  const inRange=d>=START&&d<=END;
+  const[k1,k2]=gk(idx);const gr=gg(idx);
+  const col=dayColor(d);const dow=d.getDay();
+  const isWD=dow>=1&&dow<=4;
+  const tasks=tasksForDay(d);
+  let h='';
+  h+=`<div class="day-nav">
+    <button class="day-nav-btn" onclick="prevDay()">‹</button>
+    <div class="day-nav-label">${DAY_ES[dow]} ${d.getDate()} ${MON_ES[d.getMonth()]}</div>
+    <button class="day-nav-btn" onclick="nextDay()">›</button>
+  </div>`;
+  h+=`<div class="day-panel">`;
+  h+=`<div class="day-hdr" style="background:${col}">
+    <div class="day-hdr-title">${DAY_ES[dow]} ${d.getDate()} de ${MON_ES[d.getMonth()]}${key==='2026-12-06'?' ★ EXAMEN':''}</div>
+    <div class="day-hdr-sub">Día ${idx+1}${!inRange?' · fuera del plan':''}</div>
+  </div>`;
+  if(!inRange){h+=`<div style="padding:20px;text-align:center;color:var(--text2);font-size:13px">Fuera del periodo del plan</div>`;h+=`</div>`;return h;}
+  if(key==='2026-12-06'){
+    h+=`<div style="padding:20px;text-align:center">
+      <div style="font-size:40px;margin-bottom:8px">★</div>
+      <div style="font-size:16px;font-weight:600;color:var(--red);margin-bottom:10px">¡Día del JLPT N4!</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.9">Has estudiado desde el 6 de mayo.<br>179 kanji · 66 puntos de gramática.<br>Listening cada noche.<br><br><strong style="color:var(--sage)">Confía en tu trabajo. ¡Tú puedes!</strong><br>頑張って、Patri！</div>
+    </div>`;
+    h+=`</div>`;return h;
+  }
+  if(isWD){
+    h+=`<div class="kanji-grid">`;
+    for(const k of[k1,k2])h+=`<div class="kanji-card"><div class="kanji-char">${k[0]}</div><div class="kanji-info"><div class="kanji-on">音: ${k[1]}</div><div class="kanji-kun">訓: ${k[2]}</div><div class="kanji-meaning">${k[3]}</div><div class="kanji-ex">${k[4]}</div></div></div>`;
+    h+=`</div>`;
+    h+=`<div style="padding:0 12px 10px"><div class="gram-card"><div class="gram-struct">${gr[0]}</div><div class="gram-meaning">${gr[1]}</div><div class="gram-ex">${gr[2]}</div></div></div>`;
+  }
+  h+=`<div class="section-lbl">Checklist del día</div>`;
+  for(const t of tasks){
+    const done=ST[key]&&ST[key].t&&ST[key].t[t.id];
+    h+=`<div class="task-row${done?' done':''}" onclick="toggle('${key}','${t.id}')">
+      <div class="checkbox">${done?'✓':''}</div>
+      ${t.b?`<span class="badge ${t.bc}">${t.b}</span>`:'<span style="width:2px"></span>'}
+      <div style="flex:1;min-width:0"><div class="task-text">${t.text}</div>${t.sub?`<div class="task-sub">${t.sub}</div>`:''}${t.opt?'<div class="task-opt">espacio para tus notas</div>':''}</div>
+    </div>`;
+  }
+  h+=`</div>`;
+  return h;
+}
+
+function renderCal(){
+  const months=[5,6,7,8,9,10,11,12];
+  const names={5:'Mayo',6:'Junio',7:'Julio',8:'Agosto',9:'Septiembre',10:'Octubre',11:'Noviembre',12:'Diciembre'};
+  const today=new Date();today.setHours(0,0,0,0);
+  let h='';
+  for(const m of months){
+    const col=MON_COL[m];
+    h+=`<div class="month-block"><div class="month-title" style="color:${col};border-color:${col}">${names[m]} 2026</div>`;
+    h+=`<div class="cal-grid"><div class="cal-hdr">L</div><div class="cal-hdr">M</div><div class="cal-hdr">X</div><div class="cal-hdr">J</div><div class="cal-hdr fri">V</div><div class="cal-hdr we">S</div><div class="cal-hdr we">D</div>`;
+    const first=new Date(2026,m-1,1);
+    let off=first.getDay()-1;if(off<0)off=6;
+    for(let i=0;i<off;i++)h+=`<div class="cal-empty"></div>`;
+    const days=new Date(2026,m,0).getDate();
+    for(let d2=1;d2<=days;d2++){
+      const dd=new Date(2026,m-1,d2);dd.setHours(0,0,0,0);
+      const k=dkey(dd);const isT=dd.getTime()===today.getTime();
+      const before=dd<START,after=dd>END;
+      const done2=ST[k]&&ST[k].done;
+      const dow2=dd.getDay();
+      const fri2=dow2===5,we2=dow2===0||dow2===6,exam2=k==='2026-12-06';
+      let cls='cal-cell';
+      if(done2)cls+=' done';if(isT)cls+=' today';
+      if(fri2&&!before&&!after)cls+=' fri';
+      if(we2&&!before&&!after)cls+=' we';
+      if(before||after)cls+=' past';if(exam2)cls+=' exam';
+      const idx2=di(dd);const[kk1,kk2]=gk(idx2);
+      h+=`<div class="${cls}" onclick="goDate(new Date(2026,${m-1},${d2}))">${d2}${!before&&!after&&!we2&&!fri2?`<span class="cal-k">${kk1[0]}${kk2[0]}</span>`:''}</div>`;
+    }
+    h+=`</div></div>`;
+  }
+  return h;
+}
+
+function renderKanji(){
+  let h=`<input class="search-bar" type="search" placeholder="Buscar kanji o significado..." oninput="filterK(this.value)">
+  <div style="font-size:12px;color:var(--text2);margin-bottom:10px">${KANJI.length} kanji N4 · Toca para marcar como dominado</div>
+  <div class="idx-grid" id="kg">`;
+  for(let i=0;i<KANJI.length;i++){
+    const k=KANJI[i],done=ST['k'+i];
+    h+=`<div class="idx-item${done?' done':''}" id="ki${i}" onclick="toggleK(${i})"><div class="idx-check">${done?'✓':''}</div><span class="idx-kanji">${k[0]}</span><span class="idx-meaning">${k[3]}</span></div>`;
+  }
+  return h+'</div>';
+}
+
+function renderGram(){
+  let h=`<input class="search-bar" type="search" placeholder="Buscar estructura o significado..." oninput="filterG(this.value)">
+  <div style="font-size:12px;color:var(--text2);margin-bottom:10px">${GRAMMAR.length} puntos Shinkanzen N4 · Toca para marcar como dominado</div>
+  <div id="gg">`;
+  for(let i=0;i<GRAMMAR.length;i++){
+    const g=GRAMMAR[i],done=ST['g'+i];
+    h+=`<div class="gr-item${done?' done':''}" id="gi${i}" onclick="toggleG(${i})">
+      <div class="gr-check" style="${done?'background:var(--blue);border-color:var(--blue);color:white':''}">${done?'✓':''}</div>
+      <span class="gr-struct">${g[0]}</span>
+      <span class="gr-meaning">${g[1]}</span>
+    </div>`;
+  }
+  return h+'</div>';
+}
+
+function filterK(q){
+  document.querySelectorAll('[id^="ki"]').forEach((el,i)=>{
+    const k=KANJI[i];
+    el.style.display=(!q||k[0].includes(q)||k[3].toLowerCase().includes(q))?'':'none';
+  });
+}
+function filterG(q){
+  document.querySelectorAll('[id^="gi"]').forEach((el,i)=>{
+    const g=GRAMMAR[i];
+    el.style.display=(!q||g[0].includes(q)||g[1].toLowerCase().includes(q))?'':'none';
+  });
+}
+
+function updateStats(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const total=Math.floor((END-START)/86400000)+1;
+  const daysLeft=Math.max(0,Math.floor((END-today)/86400000));
+  const done=Object.values(ST).filter(v=>v&&v.done).length;
+  const kd=KANJI.filter((_,i)=>ST['k'+i]).length;
+  const gd=GRAMMAR.filter((_,i)=>ST['g'+i]).length;
+  document.getElementById('stDone').textContent=done;
+  document.getElementById('stKanji').textContent=kd;
+  document.getElementById('stGram').textContent=gd;
+  document.getElementById('stLeft').textContent=daysLeft;
+  document.getElementById('progBar').style.width=Math.round(done/total*100)+'%';
+  let streak=0,check=new Date(today);
+  while(ST[dkey(check)]&&ST[dkey(check)].done){streak++;check.setDate(check.getDate()-1);}
+  document.getElementById('streakBadge').textContent='🔥 '+streak+' día'+(streak!==1?'s':'');
+}
+
+function prevDay(){curDate.setDate(curDate.getDate()-1);render();}
+function nextDay(){curDate.setDate(curDate.getDate()+1);render();}
+function goDate(d){curDate=d;curDate.setHours(0,0,0,0);setView('day');}
+
+function setView(v){
+  curView=v;
+  ['day','cal','kanji','gram'].forEach(x=>{
+    const btn=document.getElementById('nb-'+x);
+    if(btn)btn.className='nav-item'+(x===v?' active':'');
+  });
+  render();
+}
+
+function render(){
+  updateStats();
+  const c=document.getElementById('content');
+  if(curView==='day')c.innerHTML=renderDay();
+  else if(curView==='cal')c.innerHTML=renderCal();
+  else if(curView==='kanji')c.innerHTML=renderKanji();
+  else if(curView==='gram')c.innerHTML=renderGram();
+}
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+load();render();
+</script>
+</body>
+</html>
